@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE_NAME: "${{ secrets.DOCKER_USERNAME }}/django-app"
+  IMAGE_NAME: "${{ secrets.DOCKERHUB_USERNAME }}/django-app"
   PYTHON_VERSION: "3.11"
 
 jobs:
