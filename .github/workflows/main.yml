@@ -9,7 +9,7 @@ env:
   IMAGE_NAME: "${{ secrets.DOCKERHUB_USERNAME }}/django-app"
   PYTHON_VERSION: "3.11"
   EC2_USER: "ubuntu"
-  EC2_HOST: "${{ IP_ADDRESS }}"
+  EC2_HOST: "3.110.117.30"
   EC2_PORT: 22
   DOCKER_CONTAINER_NAME: "django-app"
 
