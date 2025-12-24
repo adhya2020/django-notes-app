@@ -76,7 +76,7 @@ jobs:
   
         run: |
           echo "${{ secrets.EC2_SSH_KEY }}" > instance_kp.pem
-          chmod 400 ec2_key.pem
+          chmod 400 instance_kp.pem
           ssh -o StrictHostKeyChecking=no -i instance_kp.pem ubuntu@3.110.117.30 << 'EOF'
           docker pull $IMAGE_NAME:latest
           docker stop django-app || true
