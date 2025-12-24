@@ -1,8 +1,8 @@
-name: Django CI/CD
+name: Django_CI/CD
 
 on:
   push:
-    branches: ["main"]
+    branches: ["dev"]
   workflow_dispatch:
 
 env:
