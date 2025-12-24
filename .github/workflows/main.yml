@@ -2,7 +2,8 @@ name: Django_CI/CD
 
 on:
   push:
-    branches: ["dev"]
+    branches: ["main", "dev"]
+
   
 env:
   IMAGE_NAME: "${{ secrets.DOCKERHUB_USERNAME }}/django-app"
