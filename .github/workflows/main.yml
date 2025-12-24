@@ -94,4 +94,4 @@ jobs:
             # Run container in detached mode, mapping port 8000
             docker run -d -p 8000:8000 --name $CONTAINER_NAME $IMAGE_NAME:latest
             echo "Deployment completed successfully!"
-EOF
+          EOF
