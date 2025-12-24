@@ -73,11 +73,14 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Deploy to EC2
-        run: |
-          ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_KEY }} ubuntu@3.110.117.30 << 'EOF'
-            docker pull ${{ env.IMAGE_NAME }}:latest
-            docker run -d -p 8000:8000 --name django-app ${{ env.IMAGE_NAME }}:latest
-          EOF
   
-    
-      
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > instance_kp.pem
+          chmod 400 ec2_key.pem
+          ssh -o StrictHostKeyChecking=no -i instance_kp.pem ubuntu@3.110.117.30 << 'EOF'
+          docker pull $IMAGE_NAME:latest
+          docker stop django-app || true
+          docker rm django-app || true
+          docker run -d -p 8000:8000 --name django-app $IMAGE_NAME:latest
+          EOF
+
