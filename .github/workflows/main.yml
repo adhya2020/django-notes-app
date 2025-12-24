@@ -60,7 +60,10 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
+          
+      - name: Push Docker image to Docker Hub
+        run: docker push ${{ env.IMAGE_NAME }}:latest
+        
   Deploy:
     runs-on: ubuntu-latest
     needs: Build_and_push_image
@@ -71,11 +74,10 @@ jobs:
 
       - name: Deploy to EC2
         run: |
-          ssh -o StrictHostKeyChecking=no -i ssh -i "ecommerce_kp.pem" ubuntu@43.204.237.249 << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i ssh -i "instance_kp.pem" ubuntu@3.110.117.30 << 'EOF'
             docker pull ${{ env.IMAGE_NAME }}:latest
             docker run -d -p 8000:8000 --name django-app ${{ env.IMAGE_NAME }}:latest
           EOF
   
     
-      - name: Push Docker image to Docker Hub
-        run: docker push ${{ env.IMAGE_NAME }}:latest
+      
