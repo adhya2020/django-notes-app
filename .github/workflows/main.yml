@@ -2,7 +2,7 @@ name: Django_CI/CD
 
 on:
   push:
-    branches: ["main", "dev"]
+    branches: ["dev"]
 
   
 env:
