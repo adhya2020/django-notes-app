@@ -74,7 +74,7 @@ jobs:
 
       - name: Deploy to EC2
         run: |
-          ssh -o StrictHostKeyChecking=no -i ssh -i "instance_kp.pem" ubuntu@3.110.117.30 << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_KEY }} ubuntu@3.110.117.30 << 'EOF'
             docker pull ${{ env.IMAGE_NAME }}:latest
             docker run -d -p 8000:8000 --name django-app ${{ env.IMAGE_NAME }}:latest
           EOF
