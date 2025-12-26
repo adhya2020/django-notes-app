@@ -1,0 +1,130 @@
+name: Django CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - dev
+
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Docker image tag"
+        required: true
+      environment:
+        description: "Deployment environment"
+        required: true
+        default: "prod"
+      dockerfile:
+        description: "Dockerfile to use"
+        required: true
+        default: "Dockerfile.dev"
+
+jobs:
+  dev-ci-cd:
+    if: github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout dev branch
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run tests
+        run: |
+          python manage.py test
+
+      - name: Docker login
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login \
+          -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Build Docker image (dev)
+        run: |
+          docker build -f Dockerfile.dev \
+          -t myrepo/django-app:dev-${{ github.sha }} .
+
+      - name: Push Docker image
+        run: |
+          docker tag myrepo/django-app:dev-${{ github.sha }} myrepo/django-app:dev-latest
+          docker push myrepo/django-app:dev-latest
+
+      - name: Deploy to Dev Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            docker pull myrepo/django-app:dev-latest
+            docker stop django-dev || true
+            docker rm django-dev || true
+            docker run -d \
+              --name django-dev \
+              -p 8000:8000 \
+              myrepo/django-app:dev-latest
+
+  # AUTO MERGE DEV → MAIN
+ 
+  auto-merge:
+    if: github.ref == 'refs/heads/dev'
+    needs: dev-ci-cd
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Merge dev into main
+        uses: pascalgn/automerge-action@v0.16.4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MERGE_METHOD: squash
+
+ 
+  # Main DEPLOY
+
+  main-deploy:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Docker login
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login \
+          -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Build Docker image (prod)
+        run: |
+          docker build \
+          -f ${{ inputs.dockerfile }} \
+          -t myrepo/django-app:${{ inputs.image_tag }} .
+
+      - name: Push Docker image
+        run: |
+          docker push myrepo/django-app:${{ inputs.image_tag }}
+
+      - name: Deploy to Production
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            docker pull myrepo/django-app:${{ inputs.image_tag }}
+            docker stop django-prod || true
+            docker rm django-prod || true
+            docker run -d \
+              --env ENV=${{ inputs.environment }} \
+              -p 8000:8000 \
+              myrepo/django-app:${{ inputs.image_tag }}
