@@ -17,8 +17,14 @@ on:
       dockerfile:
         description: "Dockerfile to use"
         required: true
-        default: "Dockerfile.dev"
+        default: "Dockerfile"
+env:
+  IMAGE_NAME: "${{ secrets.DOCKER_USERNAME }}/django-app"
+  PYTHON_VERSION: "3.11"
+  DOCKER_CONTAINER_DEV: "django-app-Dev"
+  DOCKER_CONTAINER_MAIN: "django-app-Main"
 
+  
 jobs:
   dev-ci-cd:
     if: github.ref == 'refs/heads/dev'
@@ -31,10 +37,11 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Run tests
@@ -48,13 +55,13 @@ jobs:
 
       - name: Build Docker image (dev)
         run: |
-          docker build -f Dockerfile.dev \
-          -t myrepo/django-app:dev-${{ github.sha }} .
+          docker build -f Dockerfile \
+          -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
 
       - name: Push Docker image
         run: |
-          docker tag myrepo/django-app:dev-${{ github.sha }} myrepo/django-app:dev-latest
-          docker push myrepo/django-app:dev-latest
+          docker tag ${{ env.IMAGE_NAME }}:dev-${{ github.sha }} \ ${{ env.IMAGE_NAME }}:dev-latest
+          docker push ${{ env.IMAGE_NAME }}:dev-latest
 
       - name: Deploy to Dev Server
         uses: appleboy/ssh-action@v1.0.3
@@ -63,13 +70,13 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            docker pull myrepo/django-app:dev-latest
-            docker stop django-dev || true
-            docker rm django-dev || true
+            docker pull ${{ env.IMAGE_NAME }}:dev-latest
+            docker stop ${{env.DOCKER_CONTAINER_DEV}} || true
+            docker rm ${{env.DOCKER_CONTAINER_DEV}} || true
             docker run -d \
-              --name django-dev \
+              --name ${{env.DOCKER_CONTAINER_DEV}}  \
               -p 8000:8000 \
-              myrepo/django-app:dev-latest
+              ${{ env.IMAGE_NAME }}:dev-latest
 
   # AUTO MERGE DEV → MAIN
  
@@ -104,15 +111,15 @@ jobs:
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login \
           -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      - name: Build Docker image (prod)
+      - name: Build Docker image (main)
         run: |
           docker build \
           -f ${{ inputs.dockerfile }} \
-          -t myrepo/django-app:${{ inputs.image_tag }} .
+          -t ${{ env.IMAGE_NAME }}:${{ inputs.image_tag }} .
 
       - name: Push Docker image
         run: |
-          docker push myrepo/django-app:${{ inputs.image_tag }}
+          docker push ${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}
 
       - name: Deploy to Production
         uses: appleboy/ssh-action@v1.0.3
@@ -121,10 +128,10 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            docker pull myrepo/django-app:${{ inputs.image_tag }}
-            docker stop django-prod || true
-            docker rm django-prod || true
+            docker pull ${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}
+            docker stop ${{env.DOCKER_CONTAINER_MAIN}} || true
+            docker rm ${{env.DOCKER_CONTAINER_MAIN}} || true
             docker run -d \
               --env ENV=${{ inputs.environment }} \
               -p 8000:8000 \
-              myrepo/django-app:${{ inputs.image_tag }}
+              ${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}
