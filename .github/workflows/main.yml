@@ -1,8 +1,12 @@
 name: Django_CI/CD
 
 on:
+<<<<<<< HEAD
   push:
     branches: ["dev"]
+=======
+  workflow_dispatch:
+>>>>>>> dev
 
   
 env:
