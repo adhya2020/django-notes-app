@@ -2,12 +2,11 @@ name: Django CI/CD Pipeline
 
 on:
   push:
-<<<<<<< HEAD
     branches: [dev]
-=======
-    branches:
-      - dev
->>>>>>> dev
+  pull_request:
+    branches: [ main ]
+    types: [opened, reopened, synchronize]
+
 
   workflow_dispatch:
     inputs:
@@ -17,11 +16,7 @@ on:
       environment:
         description: "Deployment environment"
         required: true
-<<<<<<< HEAD
         default: "dev"
-=======
-        default: "prod"
->>>>>>> dev
       dockerfile:
         description: "Dockerfile to use"
         required: true
@@ -35,7 +30,7 @@ env:
   
 jobs:
   dev-ci-cd:
-    if: github.ref == 'refs/heads/dev'
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
 
     steps:
@@ -66,21 +61,14 @@ jobs:
           docker build -f Dockerfile \
           -t ${{ env.IMAGE_NAME }}:dev-${{ github.sha }} .
 
-<<<<<<< HEAD
 
                                     
-=======
->>>>>>> dev
       - name: Push Docker image
         run: |
           docker tag ${{ env.IMAGE_NAME }}:dev-${{ github.sha }} ${{ env.IMAGE_NAME }}:dev-latest
           docker push ${{ env.IMAGE_NAME }}:dev-latest
-<<<<<<< HEAD
 
 
-=======
-    
->>>>>>> dev
       - name: Deploy to Dev Server
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -89,57 +77,34 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             docker pull ${{ env.IMAGE_NAME }}:dev-latest
-<<<<<<< HEAD
+            docker rm -f ${{ env.DOCKER_CONTAINER_DEV }} 2>/dev/null || true
             CONTAINERS=$(docker ps -q --filter "publish=8000")
             if [ -n "$CONTAINERS" ]; then
              echo "Stopping containers using port 8000..."
              docker rm -f $CONTAINERS
              sleep 3
             fi
-=======
-            docker stop ${{env.DOCKER_CONTAINER_DEV}} || true
-            docker rm ${{env.DOCKER_CONTAINER_DEV}} || true
->>>>>>> dev
             docker run -d \
               --name ${{env.DOCKER_CONTAINER_DEV}}  \
               -p 8000:8000 \
               ${{ env.IMAGE_NAME }}:dev-latest
-
-<<<<<<< HEAD
+              
   
-  merge-dev-to-main:
-    needs: dev-ci-cd
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Configure git
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-      - name: Merge dev into main
-        run: |
-          git checkout main
-          git pull origin main
-          git merge origin/dev --no-ff -m "Auto merge dev into main"
-          git push origin main
-=======
   # AUTO MERGE DEV → MAIN
  
   auto-merge:
-    if: github.ref == 'refs/heads/dev'
-    needs: dev-ci-cd
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
 
     steps:
-      - name: Merge dev into main
-        uses: pascalgn/automerge-action@v0.16.4
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MERGE_METHOD: squash
->>>>>>> dev
+    - name: Auto merge dev → main
+      uses: pascalgn/automerge-action@v0.16.4
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        MERGE_METHOD: squash
+        MERGE_LABELS: ""
+
+
 
  
   # Main DEPLOY
@@ -147,10 +112,6 @@ jobs:
   main-deploy:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-<<<<<<< HEAD
-=======
-    needs: auto-merge
->>>>>>> dev
     environment: production
 
     steps:
@@ -182,11 +143,12 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             docker pull ${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
             docker rm -f ${{ env.DOCKER_CONTAINER_MAIN }} 2>/dev/null || true
->>>>>>> 1590c85d6f8addb089c7a63f05018c501d5b4744
+            CONTAINERS=$(docker ps -q --filter "publish=8000")
+            if [ -n "$CONTAINERS" ]; then
+             echo "Stopping containers using port 8000..."
+             docker rm -f $CONTAINERS
+             sleep 3
             CONTAINERS=$(docker ps -q --filter "publish=8000")
             if [ -n "$CONTAINERS" ]; then
                echo "Stopping containers using port 8000..."
@@ -197,11 +159,3 @@ jobs:
             docker run -d --name ${{ env.DOCKER_CONTAINER_MAIN }} \
             -p 8000:8000 --restart unless-stopped \
             ${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}
-=======
-            docker stop ${{env.DOCKER_CONTAINER_MAIN}} || true
-            docker rm ${{env.DOCKER_CONTAINER_MAIN}} || true
-            docker run -d \
-              --env ENV=${{ inputs.environment }} \
-              -p 8000:8000 \
-              ${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}
->>>>>>> dev
