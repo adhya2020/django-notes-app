@@ -3,6 +3,8 @@ name: Django CI/CD Pipeline
 on:
   push:
     branches: [dev]
+  pull_request:
+    branches: [ main ]
 
   workflow_dispatch:
     inputs:
@@ -26,7 +28,7 @@ env:
   
 jobs:
   dev-ci-cd:
-    if: github.ref == 'refs/heads/dev'
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
 
     steps:
@@ -89,17 +91,17 @@ jobs:
   # AUTO MERGE DEV → MAIN
  
   auto-merge:
-    if: github.ref == 'refs/heads/dev'
-    needs: dev-ci-cd
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    
 
     steps:
-      - name: Merge dev into main
-        uses: pascalgn/automerge-action@v0.16.4
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MERGE_METHOD: squash
+    - name: Auto merge dev → main
+      uses: pascalgn/automerge-action@v0.16.4
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        MERGE_METHOD: squash
+        MERGE_LABELS: ""
+
 
  
   # Main DEPLOY
