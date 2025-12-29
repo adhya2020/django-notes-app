@@ -56,7 +56,7 @@ jobs:
       - name: Build Docker image (dev)
         run: |
           docker build -f Dockerfile \
-          -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
+          -t ${{ env.IMAGE_NAME }}:dev-${{ github.sha }} .
 
       - name: Push Docker image
         run: |
