@@ -13,7 +13,7 @@ on:
       environment:
         description: "Deployment environment"
         required: true
-        default: "prod"
+        default: "dev"
       dockerfile:
         description: "Dockerfile to use"
         required: true
@@ -55,13 +55,13 @@ jobs:
 
       - name: Build Docker image (dev)
         run: |
-          docker build -f Dockerfile \
-          -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
-
+          docker build -f Dockerfile \ -t ${{ env.IMAGE_NAME }}:dev-${{ github.sha }} .
+                                    
       - name: Push Docker image
         run: |
-          docker tag ${{ env.IMAGE_NAME }}:dev-${{ github.sha }} \ ${{ env.IMAGE_NAME }}:dev-latest
+          docker tag ${{ env.IMAGE_NAME }}:dev-${{ github.sha }} ${{ env.IMAGE_NAME }}:dev-latest
           docker push ${{ env.IMAGE_NAME }}:dev-latest
+
 
       - name: Deploy to Dev Server
         uses: appleboy/ssh-action@v1.0.3
@@ -132,6 +132,7 @@ jobs:
             docker stop ${{env.DOCKER_CONTAINER_MAIN}} || true
             docker rm ${{env.DOCKER_CONTAINER_MAIN}} || true
             docker run -d \
-              --env ENV=${{ inputs.environment }} \
+              --env ENV=${{ inputs.environment }} \ -p 8000:8000 \
+              ${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}
               -p 8000:8000 \
               ${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}
