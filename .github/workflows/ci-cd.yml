@@ -84,6 +84,7 @@ jobs:
     if: github.ref == 'refs/heads/dev'
     needs: dev-ci-cd
     runs-on: ubuntu-latest
+    
 
     steps:
       - name: Merge dev into main
@@ -98,6 +99,7 @@ jobs:
   main-deploy:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    needs: auto-merge
     environment: production
 
     steps:
