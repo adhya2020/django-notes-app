@@ -113,8 +113,15 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment: production
-
+    
     steps:
+      - name: Check branch
+        run: |
+          if [ "${GITHUB_REF##*/}" != "main" ]; then
+            echo "ERROR: Production deploy can only run from the main branch!"
+            exit 1
+          fi
+
       - name: Checkout main branch
         uses: actions/checkout@v4
         with:
