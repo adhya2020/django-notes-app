@@ -3,7 +3,7 @@ name: Django CI/CD Pipeline
 on:
   push:
     branches:
-      - dev
+     -dev
 
   workflow_dispatch:
     inputs:
@@ -78,20 +78,25 @@ jobs:
               -p 8000:8000 \
               ${{ env.IMAGE_NAME }}:dev-latest
 
-  # AUTO MERGE DEV → MAIN
- 
-  auto-merge:
-    if: github.ref == 'refs/heads/dev'
+  
+  merge-dev-to-main:
     needs: dev-ci-cd
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
-    
-
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Configure git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
       - name: Merge dev into main
-        uses: pascalgn/automerge-action@v0.16.4
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MERGE_METHOD: squash
+        run: |
+          git checkout main
+          git pull origin main
+          git merge origin/dev --no-ff -m "Auto merge dev into main"
+          git push origin main
 
  
   # Main DEPLOY
@@ -99,7 +104,6 @@ jobs:
   main-deploy:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    needs: auto-merge
     environment: production
 
     steps:
@@ -135,6 +139,4 @@ jobs:
             docker rm ${{env.DOCKER_CONTAINER_MAIN}} || true
             docker run -d \
               --env ENV=${{ inputs.environment }} \ -p 8000:8000 \
-              ${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}
-              -p 8000:8000 \
               ${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}
