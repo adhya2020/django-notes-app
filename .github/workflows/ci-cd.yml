@@ -146,15 +146,9 @@ jobs:
             docker rm -f ${{ env.DOCKER_CONTAINER_MAIN }} 2>/dev/null || true
             CONTAINERS=$(docker ps -q --filter "publish=8000")
             if [ -n "$CONTAINERS" ]; then
-             echo "Stopping containers using port 8000..."
-             docker rm -f $CONTAINERS
-             sleep 3
-            CONTAINERS=$(docker ps -q --filter "publish=8000")
-            if [ -n "$CONTAINERS" ]; then
-               echo "Stopping containers using port 8000..."
-               docker rm -f $CONTAINERS
-               sleep 3
-               
+              echo "Stopping containers using port 8000..."
+              docker rm -f $CONTAINERS
+              sleep 3
             fi
             docker run -d --name ${{ env.DOCKER_CONTAINER_MAIN }} \
             -p 8000:8000 --restart unless-stopped \
