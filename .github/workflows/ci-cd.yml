@@ -86,24 +86,20 @@ jobs:
               ${{ env.IMAGE_NAME }}:dev-latest
               
   
-  merge-dev-to-main:
+  # AUTO MERGE DEV → MAIN
+ 
+  auto-merge:
+    if: github.ref == 'refs/heads/dev'
     needs: dev-ci-cd
-    if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    
+
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Configure git
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
       - name: Merge dev into main
-        run: |
-          git checkout main
-          git pull origin main
-          git merge origin/dev --no-ff -m "Auto merge dev into main"
-          git push origin main
+        uses: pascalgn/automerge-action@v0.16.4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MERGE_METHOD: squash
 
  
   # Main DEPLOY
