@@ -138,7 +138,7 @@ jobs:
           script: |
             docker pull ${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}
             docker stop ${{env.DOCKER_CONTAINER_MAIN}} || true
-            docker rm ${{env.DOCKER_CONTAINER_MAIN}} || true
+            docker rm -f ${{env.DOCKER_CONTAINER_MAIN}} || true
             docker run -d --name ${{ env.DOCKER_CONTAINER_MAIN }} \
             -p 8000:8000 --restart unless-stopped \
             ${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}
