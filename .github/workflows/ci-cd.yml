@@ -60,9 +60,9 @@ jobs:
 
       - name: Push Docker image
         run: |
-          docker tag ${{ env.IMAGE_NAME }}:dev-${{ github.sha }} \ ${{ env.IMAGE_NAME }}:dev-latest
+          docker tag ${{ env.IMAGE_NAME }}:dev-${{ github.sha }} ${{ env.IMAGE_NAME }}:dev-latest
           docker push ${{ env.IMAGE_NAME }}:dev-latest
-
+    
       - name: Deploy to Dev Server
         uses: appleboy/ssh-action@v1.0.3
         with:
