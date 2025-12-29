@@ -1,8 +1,6 @@
 name: Django_CI/CD
 
-on:
-  push:
-    branches: ["dev"]
+
 
   
 env:
