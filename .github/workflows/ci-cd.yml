@@ -77,12 +77,13 @@ jobs:
             if [ -n "$CONTAINERS" ]; then
              echo "Stopping containers using port 8000..."
              docker rm -f $CONTAINERS
+             sleep 3
             fi
             docker run -d \
               --name ${{env.DOCKER_CONTAINER_DEV}}  \
               -p 8000:8000 \
               ${{ env.IMAGE_NAME }}:dev-latest
-
+              
   
   merge-dev-to-main:
     needs: dev-ci-cd
@@ -144,6 +145,7 @@ jobs:
             if [ -n "$CONTAINERS" ]; then
              echo "Stopping containers using port 8000..."
              docker rm -f $CONTAINERS
+             sleep 3
             fi
             docker run -d --name ${{ env.DOCKER_CONTAINER_MAIN }} \
             -p 8000:8000 --restart unless-stopped \
