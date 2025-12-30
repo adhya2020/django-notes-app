@@ -31,7 +31,7 @@ env:
 jobs:
   dev-ci-cd:
     if: github.ref == 'refs/heads/dev'
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       - name: Checkout dev branch
@@ -70,12 +70,7 @@ jobs:
 
 
       - name: Deploy to Dev Server
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
+        run: |
             docker pull ${{ env.IMAGE_NAME }}:dev-latest
             docker rm -f ${{ env.DOCKER_CONTAINER_DEV }} 2>/dev/null || true
             CONTAINERS=$(docker ps -q --filter "publish=8000")
@@ -101,17 +96,13 @@ jobs:
       uses: pascalgn/automerge-action@v0.16.4
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        MERGE_METHOD: squash
-        MERGE_LABELS: ""
-
-
-
+        
  
   # Main DEPLOY
 
   main-deploy:
     if: github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     environment: production
     
     steps:
@@ -143,12 +134,7 @@ jobs:
           docker push ${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}
 
       - name: Deploy to Production
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
+        run: |
             docker pull ${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}
             docker rm -f ${{ env.DOCKER_CONTAINER_MAIN }} 2>/dev/null || true
             CONTAINERS=$(docker ps -q --filter "publish=8000")
