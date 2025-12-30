@@ -31,7 +31,7 @@ env:
 jobs:
   dev-ci-cd:
     if: github.ref == 'refs/heads/dev'
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout dev branch
@@ -68,7 +68,19 @@ jobs:
           docker tag ${{ env.IMAGE_NAME }}:dev-${{ github.sha }} ${{ env.IMAGE_NAME }}:dev-latest
           docker push ${{ env.IMAGE_NAME }}:dev-latest
 
+  dev-deploy:
+    needs: dev-ci-cd
+    runs-on: self-hosted
 
+    steps:
+      - name: Checkout dev branch
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
       - name: Deploy to Dev Server
         run: |
             docker pull ${{ env.IMAGE_NAME }}:dev-latest
