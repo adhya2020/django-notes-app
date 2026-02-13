@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dep
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      key: pn
+  template:
+    metadata:
+      labels:
+        key: pn  # Ensure this label matches the service selector
+    spec:
+      containers:
+        - name: c1
+          image: deepakgonsalves63/mi  # Ensure this image has the Django app
+          command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+          ports:
+            - containerPort: 8000
+      nodeSelector:
+        lbl: slave2
